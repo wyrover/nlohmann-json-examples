@@ -1,8 +1,19 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
+#include <chrono>
+
+
+
+inline uint64_t unixtime_ms()
+{
+    return (std::chrono::system_clock::now().time_since_epoch()
+            / std::chrono::milliseconds(1));
+}
 
 int main()
 {
+
+
     std::cout << "Hello, World!" << std::endl;
     using json = nlohmann::json;
 
@@ -28,6 +39,29 @@ int main()
     std::cout << j2 << std::endl;
     std::cout << j2.dump() << std::endl;
     std::cout << j2.dump(4) << std::endl;
+
+    std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+
+    // C++ 14
+    for (auto& el: j2.items()) {
+        std::cout << el.key() << " : " << el.value() << std::endl;
+    }
+
+    std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+
+    // C++ 17
+//    for (auto& [key, value]: j2.items()) {
+//        std::cout << key << " : " << value << std::endl;
+//    }
+
+
+    std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+
+    for (json::iterator it = j2.begin(); it != j2.end(); ++it) {
+        std::cout << it.key() << " : " << it.value() << std::endl;
+    }
+
+    std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
 
     // 字符串模式
     json j = "{ \"happy\": true, \"pi\": 3.141 }"_json;
@@ -103,6 +137,13 @@ int main()
     }
 
 
+    // 显式类型转换
+    std::cout << "显式类型转换" << std::endl;
+    std::cout << j5["pi"].get<double>() << std::endl;
+    std::cout << j5["happy"].get<bool>() << std::endl;
+
+
+
     // 获取 json value
     json j_string = "this is a string";
     auto cpp_string = j_string.get<std::string>();
@@ -125,6 +166,74 @@ int main()
 
     // 默认序列化
     std::cout << j_string << " == " << serialized_string << std::endl;
+
+
+
+
+    // a JSON value
+    json j_original = R"({
+      "baz": ["one", "two", "three"],
+      "foo": "bar"
+    })"_json;
+
+    // access members with a JSON pointer (RFC 6901)
+    std::cout << j_original["/baz/1"_json_pointer] << std::endl;
+    // "two"
+
+
+    // a JSON patch (RFC 6902)
+    json j_patch = R"([
+      { "op": "replace", "path": "/baz", "value": "boo" },
+      { "op": "add", "path": "/hello", "value": ["world"] },
+      { "op": "remove", "path": "/foo"}
+    ])"_json;
+
+    // apply the patch
+    json j_result = j_original.patch(j_patch);
+
+    std::cout << j_result << std::endl;
+
+    std::cout << json::diff(j_result, j_original) << std::endl;
+
+
+
+
+    json period = json::array({
+                                      {9, 0, 10, 15},
+                                      {10, 30, 11, 30},
+                                      {13, 30, 15, 0}
+                              });
+
+
+    std::cout << period << std::endl;
+
+    std::cout << unixtime_ms() << std::endl;
+
+
+    json nperiod = json::array({
+                                       {{"AU", "AG", "sc"},
+                                               {21, 0, 02, 30}},
+                                       {{"CU", "AL", "ZN", "PB", "SN", "NI"},
+                                               {21, 0, 01, 0}},
+                                       {{"RU", "RB", "HC", "BU"},
+                                               {21, 0, 23, 0}},
+                                       {{"P", "J", "M", "Y", "A", "B", "JM", "I"},
+                                               {21, 0, 23, 30}},
+                                       {{"SR", "CF", "RM", "MA", "TA", "ZC", "FG", "OI"},
+                                               {21, 0, 23, 30}},
+                               });
+
+
+    //std::cout << nperiod.dump(4) << std::endl;
+
+    std::cout << nperiod.size() << std::endl;
+
+
+    for (size_t i = 0; i < nperiod.size(); ++i) {
+
+        std::cout << nperiod[i] << std::endl;
+
+    }
 
 
     return 0;
